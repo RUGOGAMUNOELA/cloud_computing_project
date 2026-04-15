@@ -1,7 +1,7 @@
-# SkyPipe — A Distributed Data Processing Pipeline
+# SkyPipe: A Distributed Data Processing Pipeline
 
-> **DSC3219 · Cloud and Distributed Computing (UCU, Easter 2026)**  
-> A complete, production-ready pipeline that ingests multi-format datasets, processes them in parallel with Spark, and stores analytics in a layered DuckDB warehouse.
+> **DSC3219 · Cloud and Distributed Computing Project Exam(UCU, Easter 2026)**  
+> A complete, production ready pipeline that ingests multi format datasets, processes them in parallel with Spark, and stores analytics in a layered DuckDB warehouse.
 
 Built by **Rugogamu Noela (S23B38/016, B22775)**
 
@@ -37,31 +37,31 @@ Built by **Rugogamu Noela (S23B38/016, B22775)**
 
 ## Executive Summary
 
-**SkyPipe** is a full distributed data processing pipeline developed for the DSC3219 project-based exam at Uganda Christian University. The system implements the required **3-stage architecture** end-to-end:
+**SkyPipe** is a full distributed data processing pipeline. The system implements the required **3-stage architecture** end-to-end:
 
 1. **Input Stage** - dataset upload and validation into distributed object storage (MinIO, S3-compatible).  
 2. **Processing Stage** - adaptive parallel analytics using Apache Spark / PySpark.  
 3. **Result Store Stage** - layered DuckDB warehouse (`raw_data -> processed -> analytics`) with queryable outputs and UI visualizations.
 
-The platform supports **CSV, JSON, Excel, and Parquet**, includes JWT-secured APIs, tracks real-time job progress, and persists warehouse-ready aggregates. It is designed to be both academically defensible and practically useful.
+The platform supports **CSV, JSON, Excel, and Parquet**, includes JWT secured APIs, tracks real time job progress, and persists warehouse ready aggregates. It is designed to be both academically defensible and practically useful.
 
 ## Key Features
 
-- ✅ **Multi-format ingestion**: CSV, JSON, XLSX/XLS, Parquet  
-- ✅ **Distributed object storage** via **MinIO (S3 API)**  
-- ✅ **Parallel Spark processing** with adaptive schema-aware analytics  
-- ✅ **Layered DuckDB warehouse**: `raw_data`, `processed`, `analytics`  
-- ✅ **Star schema generation** (dimension/fact tables) when grouping fields exist  
-- ✅ **Live processing UX**: upload -> progress -> results flow  
-- ✅ **Secure by default**: JWT auth, file validation, controlled storage access  
-- ✅ **Containerized deployment** with Docker Compose  
-- ✅ **Clear observability**: job states, metrics, and warehouse table mapping
+-  **Multi format ingestion**: CSV, JSON, XLSX/XLS, Parquet  
+-  **Distributed object storage** via **MinIO (S3 API)**  
+-  **Parallel Spark processing** with adaptive schema-aware analytics  
+-  **Layered DuckDB warehouse**: `raw_data`, `processed`, `analytics`  
+-  **Star schema generation** (dimension/fact tables) when grouping fields exist  
+-  **Live processing UX**: upload -> progress -> results flow  
+-  **Secure by default**: JWT auth, file validation, controlled storage access  
+-  **Containerized deployment** with Docker Compose  
+-  **Clear observability**: job states, metrics, and warehouse table mapping
 
 ## Architecture Overview
 
 SkyPipe separates UI, API orchestration, distributed storage, parallel compute, and result warehousing to mirror real cloud data platforms. The frontend communicates with FastAPI through Nginx, uploads are staged in MinIO, Spark executes adaptive analytics, and outputs are persisted in DuckDB for immediate querying and dashboard use.
 
-> 📌 Add your architecture figure here if available:  
+>  Architecture figure:  
 > `docs/images/system_architecture.png`
 
 ```md
@@ -141,7 +141,7 @@ ORDER BY table_schema, table_name;
 
 ## Screenshots
 
-> Add real images in `docs/images/` and update paths below.
+> Different UI images.
 
 ### Dashboard
 `docs/images/dashboard.png`  
@@ -176,7 +176,7 @@ ORDER BY table_schema, table_name;
 
 ### Security
 
-- JWT-protected backend endpoints.
+- JWT protected backend endpoints.
 - Upload validation (type, extension, size checks).
 - Credentials sourced from environment variables, not hardcoded.
 - Nginx gateway controls API route exposure.
@@ -194,9 +194,9 @@ skypipe/
 │   ├── warehouse_layers.py
 │   └── warehouse_duckdb.py
 ├── docker/                  # Dockerfiles + nginx config
-├── docs/                    # SRS, system design, concepts
-├── report/                  # Technical report (LaTeX/outputs)
-├── presentation/            # Presentation materials
+├── docs/                    # SRS,images, system design, concepts
+├── report/                  # Project report
+├── presentation/            # Project powerpoint slides
 ├── data/                    # Local persisted data (DuckDB, uploads)
 ├── docker-compose.yml
 └── README.md
@@ -204,26 +204,26 @@ skypipe/
 
 ## Learning Outcomes & Challenges Overcome
 
-This project strengthened practical understanding of distributed systems architecture, especially stage separation between storage, processing, and warehousing. It also improved skills in Spark orchestration, secure API development, and full-stack integration for data workflows.
+This project strengthened practical understanding of distributed systems architecture, especially stage separation between storage, processing, and warehousing. It also improved skills in Spark orchestration, secure API development, and full stack integration for data workflows.
 
 Key challenges included gateway timeouts during heavy processing, ensuring warehouse layers are always created per job, and keeping user-facing explanations clear. These were solved through backend job orchestration improvements, startup schema initialization, and UI/architecture refinements.
 
 ## Future Enhancements
 
-- Cluster-scale Spark deployment profile (e.g., managed cloud Spark)
+- Cluster scale Spark deployment profile (e.g., managed cloud Spark)
 - Role-based access control (RBAC) and audit logs
 - Data quality rule engine for advanced validation
 - Scheduled pipelines and recurring job triggers
-- Exportable BI-ready marts and semantic metric layer
+- Exportable BI ready marts and semantic metric layer
 
 ## Links
 
 - **GitHub Repository:** [RUGOGAMUNOELA/cloud_computing_project](https://github.com/RUGOGAMUNOELA/cloud_computing_project.git)
-- **Technical Report (PDF):** `report/` (add final PDF filename)
-- **Presentation Slides:** `presentation/` (add final PPT/PDF filename)
-- **Demo Video (if available):** add link here
+- **Technical Report (PDF):** `report/SKYPIPE_CLOUD_EXAM_REPORT.pdf`
+- **Presentation Slides:** `presentation/SkyPipe_A Distributed Data Processing Pipeline.ppt`
+- **Demo Video:** 
 
 ## License & Acknowledgments
 
 This project was developed for academic purposes under **DSC3219 Cloud and Distributed Computing** at **Uganda Christian University** (Easter 2026).  
-Special thanks to course instructors and peers for feedback during implementation and defense preparation.
+Special thanks to my course unit lecturer Mr.Ronald Ssejjuuko.
