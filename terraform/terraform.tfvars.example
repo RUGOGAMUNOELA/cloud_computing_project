@@ -1,0 +1,7 @@
+project_id  = "your-gcp-project-id"
+region      = "us-central1"
+bucket_name = "your-unique-skypipe-bucket-name"
+bq_dataset  = "skypipe"
+
+# Optional: set true only for demos with budget approval
+create_dataproc_cluster = false

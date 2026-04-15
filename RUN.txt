@@ -1,0 +1,52 @@
+================================================================================
+SkyPipe — copy/paste commands (Windows PowerShell)
+================================================================================
+
+A) LOCAL + FREE “CLOUD” STACK (Docker: MinIO + DuckDB + Spark + React)
+--------------------------------------------------------------------------------
+No GCP billing required. Matches exam stages:
+  • Input  → MinIO (S3-compatible distributed object storage)
+  • Process → Apache Spark (PySpark in API container)
+  • Results → DuckDB warehouse file on disk ($0)
+
+1) Ensure .env exists (admin login defaults: admin / skypipe unless you changed them):
+   cd C:\Users\RUGOGAMU NOELA\Desktop\CLOUD_EXAM_PROJECT\skypipe
+   .\scripts\Configure-SkyPipe.ps1 -LocalOnly
+   (Edit .env: set ADMIN_PASSWORD= and JWT_SECRET= if you like.)
+
+2) Build & run:
+   docker compose up --build
+
+   If API image fails on "Read timed out" while downloading PySpark: your link to PyPI was too slow.
+   Fix: run again (layers cache) or only rebuild API:  docker compose build skypipe-api
+   Still failing: use faster WiFi / hotspot, or VPN off, or build at a quieter time.
+
+3) Open in browser:
+   • React UI (poster-style):  http://localhost:8080
+   • API docs:                 http://localhost:8000/docs
+   • MinIO console (optional):  http://localhost:9001  (minioadmin / minioadmin)
+
+4) Dev mode (UI hot reload — two terminals):
+   Terminal A:  cd skypipe\src; uvicorn fastapi_app:app --reload --host 0.0.0.0 --port 8000
+   Terminal B:  cd skypipe\frontend; npm install; npm run dev
+   Then open http://localhost:5173  (Vite proxies /auth and /v1 to the API)
+
+5) If .env is old, add at least (or re-run Configure-SkyPipe.ps1 -LocalOnly after pulling updates):
+   ADMIN_USERNAME=admin
+   ADMIN_PASSWORD=skypipe
+   JWT_SECRET=any-long-random-string
+   CORS_ORIGINS=http://localhost:5173,http://localhost:8080,http://127.0.0.1:5173,http://127.0.0.1:8080
+
+
+B) Terraform + real GCP (when you have billing)
+--------------------------------------------------------------------------------
+See previous sections in README / Configure-SkyPipe.ps1 for terraform apply.
+When GCP_PROJECT + GCS_BUCKET + credentials are set, uploads can go to Google Cloud Storage (optional).
+
+
+C) Terraform PATH fix (if needed)
+--------------------------------------------------------------------------------
+   cd skypipe
+   .\scripts\Add-TerraformToPath.ps1
+
+================================================================================

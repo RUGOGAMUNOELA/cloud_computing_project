@@ -1,0 +1,50 @@
+services:
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+
+  skypipe-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app/src
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/skypipe-sa.json
+      - LOCAL_DATA_ROOT=/app/data
+      - DUCKDB_PATH=/app/data/warehouse.duckdb
+      - S3_ENDPOINT=http://minio:9000
+      - S3_ACCESS_KEY=minioadmin
+      - S3_SECRET_KEY=minioadmin
+      - S3_BUCKET=skypipe-uploads
+      - S3_USE_SSL=false
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./credentials:/app/credentials:ro
+    depends_on:
+      - minio
+    mem_limit: 4g
+
+  skypipe-web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    ports:
+      - "8080:80"
+    depends_on:
+      - skypipe-api
+
+volumes:
+  minio_data: {}
