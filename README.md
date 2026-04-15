@@ -61,12 +61,9 @@ The platform supports **CSV, JSON, Excel, and Parquet**, includes JWT secured AP
 
 SkyPipe separates UI, API orchestration, distributed storage, parallel compute, and result warehousing to mirror real cloud data platforms. The frontend communicates with FastAPI through Nginx, uploads are staged in MinIO, Spark executes adaptive analytics, and outputs are persisted in DuckDB for immediate querying and dashboard use.
 
->  Architecture figure:  
-> `docs/images/system_architecture.png`
-
-```md
-![SkyPipe Architecture](docs/images/system_architecture.png)
-```
+### System Architecture
+`docs/images/system_architecture.png`  
+![Dashboard](docs/images/system_architecture.png)
 
 ## Tech Stack
 
