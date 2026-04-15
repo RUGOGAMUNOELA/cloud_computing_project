@@ -1,173 +1,229 @@
-# SkyPipe
+# SkyPipe — A Distributed Data Processing Pipeline
 
-**Generalized Scalable Distributed Data Processing Pipeline on Google Cloud Platform**
+> **DSC3219 · Cloud and Distributed Computing (UCU, Easter 2026)**  
+> A complete, production-ready pipeline that ingests multi-format datasets, processes them in parallel with Spark, and stores analytics in a layered DuckDB warehouse.
 
-SkyPipe ingests **any structured tabular dataset** (CSV, XLSX, JSON, Parquet), **auto-detects schema and column roles**, runs **adaptive PySpark analytics** (MapReduce-style), stores raw files in **S3-compatible storage (MinIO)** or optional **GCS**, and persists aggregates in **DuckDB** (`warehouse.duckdb`). The **React** UI talks to **FastAPI**. **Terraform** provisions optional GCP resources; **Docker** runs the default stack. For a **standalone layered warehouse demo** (raw / processed / analytics + star schema), run `python duckdb_warehouse_pipeline.py` from the `skypipe/` folder.
+Built by **Rugogamu Noela (S23B38/016, B22775)**
 
-> **DSC3219 (UCU, Easter 2026)** — demonstrates MapReduce, distributed Spark, RPC-style APIs, virtualization, fault tolerance, scalability, and GCP security patterns **without hardcoding a specific dataset**.
+---
 
-## Features
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Apache Spark](https://img.shields.io/badge/Apache-Spark-E25A1C?logo=apachespark&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react&logoColor=0b0f14)
+![Nginx](https://img.shields.io/badge/Nginx-Reverse_Proxy-009639?logo=nginx&logoColor=white)
+![DuckDB](https://img.shields.io/badge/DuckDB-Warehouse-FFF000?logo=duckdb&logoColor=black)
+![MinIO](https://img.shields.io/badge/MinIO-Object_Storage-C72E49?logo=minio&logoColor=white)
+![PySpark](https://img.shields.io/badge/PySpark-Parallel_Processing-FDEE21?logo=apachespark&logoColor=black)
+![JWT](https://img.shields.io/badge/Auth-JWT-000000?logo=jsonwebtokens&logoColor=white)
 
-| Capability | Implementation |
-|------------|----------------|
-| Multi-format ingest | Spark readers + Pandas bridge for Excel |
-| Schema detection | `schema_detector.py` (numeric / categorical / datetime / boolean) |
-| Adaptive analytics | `spark_pipeline.py` — stats match detected types |
-| GCS storage | Upload + versioning-friendly object layout |
-| DuckDB warehouse | Job summaries in `data/warehouse.duckdb`; optional `duckdb_warehouse_pipeline.py` for layered schemas |
-| Security | Optional Firebase token verification, signed URLs, IAM, upload validation |
-| IaC | `terraform/` — bucket, dataset, SA, optional Dataproc |
+---
 
-## Repository layout
+## Table of Contents
 
+- [Executive Summary](#executive-summary)
+- [Key Features](#key-features)
+- [Architecture Overview](#architecture-overview)
+- [Tech Stack](#tech-stack)
+- [Quick Start / Installation](#quick-start--installation)
+- [Usage Guide](#usage-guide)
+- [Screenshots](#screenshots)
+- [Scalability, Fault Tolerance \& Security](#scalability-fault-tolerance--security)
+- [Project Structure](#project-structure)
+- [Learning Outcomes \& Challenges Overcome](#learning-outcomes--challenges-overcome)
+- [Future Enhancements](#future-enhancements)
+- [Links](#links)
+- [License \& Acknowledgments](#license--acknowledgments)
+
+## Executive Summary
+
+**SkyPipe** is a full distributed data processing pipeline developed for the DSC3219 project-based exam at Uganda Christian University. The system implements the required **3-stage architecture** end-to-end:
+
+1. **Input Stage** - dataset upload and validation into distributed object storage (MinIO, S3-compatible).  
+2. **Processing Stage** - adaptive parallel analytics using Apache Spark / PySpark.  
+3. **Result Store Stage** - layered DuckDB warehouse (`raw_data -> processed -> analytics`) with queryable outputs and UI visualizations.
+
+The platform supports **CSV, JSON, Excel, and Parquet**, includes JWT-secured APIs, tracks real-time job progress, and persists warehouse-ready aggregates. It is designed to be both academically defensible and practically useful.
+
+## Key Features
+
+- ✅ **Multi-format ingestion**: CSV, JSON, XLSX/XLS, Parquet  
+- ✅ **Distributed object storage** via **MinIO (S3 API)**  
+- ✅ **Parallel Spark processing** with adaptive schema-aware analytics  
+- ✅ **Layered DuckDB warehouse**: `raw_data`, `processed`, `analytics`  
+- ✅ **Star schema generation** (dimension/fact tables) when grouping fields exist  
+- ✅ **Live processing UX**: upload -> progress -> results flow  
+- ✅ **Secure by default**: JWT auth, file validation, controlled storage access  
+- ✅ **Containerized deployment** with Docker Compose  
+- ✅ **Clear observability**: job states, metrics, and warehouse table mapping
+
+## Architecture Overview
+
+SkyPipe separates UI, API orchestration, distributed storage, parallel compute, and result warehousing to mirror real cloud data platforms. The frontend communicates with FastAPI through Nginx, uploads are staged in MinIO, Spark executes adaptive analytics, and outputs are persisted in DuckDB for immediate querying and dashboard use.
+
+> 📌 Add your architecture figure here if available:  
+> `docs/images/system_architecture.png`
+
+```md
+![SkyPipe Architecture](docs/images/system_architecture.png)
 ```
-skypipe/
-├── README.md
-├── requirements.txt
-├── docker-compose.yml
-├── .env.example
-├── terraform/
-├── docker/
-├── src/
-│   ├── fastapi_app.py
-│   ├── spark_pipeline.py
-│   ├── gcp_utils.py
-│   ├── schema_detector.py
-│   └── data/
-├── docs/           # SRS, system design, concepts
-├── report/
-├── frontend/          # React (Vite) UI
-├── presentation/
-└── notebooks/
+
+## Tech Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| Frontend | React + TypeScript | User interface for login, upload, monitoring, and results |
+| Web Gateway | Nginx | Static frontend serving + reverse proxy to backend |
+| Backend API | FastAPI (Python) | Auth, upload intake, job orchestration, status/results APIs |
+| Distributed Storage | MinIO (S3-compatible) | Input dataset storage for shared/parallel reads |
+| Processing Engine | Apache Spark / PySpark | Parallel processing + adaptive analytics |
+| Warehouse | DuckDB | Layered analytics storage (`raw_data`, `processed`, `analytics`) |
+| Auth | JWT | Protected API access |
+| DevOps | Docker Compose | Reproducible multi-service local deployment |
+
+## Quick Start / Installation
+
+### Prerequisites
+
+- Docker + Docker Compose
+- Git
+- (Optional local dev) Python 3.10+ and Node.js 18+
+
+### 1) Clone repository
+
+```bash
+git clone https://github.com/RUGOGAMUNOELA/cloud_computing_project.git
+cd cloud_computing_project/skypipe
 ```
 
-## Quick start (local, no GCP)
-
-1. **Python 3.10+** (3.10–3.12 recommended; Spark wheels may lag newest Python) and **Java 17** (required for Spark).
-
-   **Windows PowerShell** (venv activation is *not* the bare word `activate`):
-
-   ```powershell
-   cd skypipe
-   python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
-   pip install -r requirements.txt
-   ```
-
-   If `Activate.ps1` is blocked by execution policy:
-
-   ```powershell
-   Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-   ```
-
-   **Command Prompt (cmd.exe):** `.\.venv\Scripts\activate.bat`
-
-   If `pip install` was **cancelled or failed**, run `pip install -r requirements.txt` again until it finishes. Optional GCS uploads need `google-cloud-storage`; you still need PySpark/Java for Spark itself.
-
-### Java 17 (required for PySpark)
-
-PySpark starts a **JVM**. You need a **JDK** (not only a JRE), and on Windows **`JAVA_HOME`** should point at the JDK root (the folder that contains `bin\java.exe`).
-
-- **Install (recommended):** [Eclipse Temurin 17](https://adoptium.net/) or, in PowerShell as admin:
-
-  ```powershell
-  winget install EclipseAdoptium.Temurin.17.JDK
-  ```
-
-- **Set `JAVA_HOME` permanently:** Windows Search → “Environment Variables” → New user variable `JAVA_HOME` = e.g. `C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot` → Edit `Path` → add `%JAVA_HOME%\bin`.
-
-- **Current PowerShell session only:**
-
-  ```powershell
-  cd skypipe
-  . .\scripts\setup_java_env.ps1
-  ```
-
-`spark_pipeline.py` also **auto-detects** Temurin/Microsoft/Oracle JDKs under `Program Files` when `JAVA_HOME` is unset (Windows only). After installing Java, **open a new terminal** (or dot-source `setup_java_env.ps1`) and run the pipeline again.
-
-2. **Run Spark pipeline on sample CSV**
-
-   ```bash
-   cd src
-   python spark_pipeline.py data/sample_sales.csv
-   ```
-
-3. **API + React UI (local)**  
-   Leave `GCP_PROJECT` / `GCS_BUCKET` empty unless using real GCP.
-
-   ```bash
-   cd src
-   uvicorn fastapi_app:app --reload --host 0.0.0.0 --port 8000
-   ```
-
-   ```bash
-   cd frontend
-   npm install && npm run dev
-   ```
-
-   Open **http://localhost:5173** — login **admin** / **skypipe** (defaults). Vite proxies API calls to port 8000.
-
-## Docker
-
-From `skypipe/` (create `.env` from `.env.example` first):
+### 2) Start full stack (recommended)
 
 ```bash
 docker compose up --build
 ```
 
-- API: `http://localhost:8000/docs`  
-- React UI (nginx + MinIO + DuckDB volume): `http://localhost:8080`  
-- MinIO console: `http://localhost:9001` (`minioadmin` / `minioadmin`)
+### 3) Open services
 
-## Google Cloud setup
+- **UI:** `http://localhost:8080`
+- **API Docs:** `http://localhost:8000/docs`
+- **MinIO Console:** `http://localhost:9001` (default: `minioadmin / minioadmin`)
 
-1. Copy `terraform/terraform.tfvars.example` → `terraform.tfvars` and fill values.
-2. `cd terraform && terraform init && terraform apply`
-3. Create a key for the `skypipe-pipeline` service account **only for dev** (prefer Workload Identity Federation in production).
-4. Set `GOOGLE_APPLICATION_CREDENTIALS`, `GCP_PROJECT`, `GCS_BUCKET` in `.env`.
+## Usage Guide
 
-**Signed URLs** require the service account to have permission to sign blobs (typically `roles/iam.serviceAccountTokenCreator` on self for user-managed keys, or use impersonation — see [GCS signed URL docs](https://cloud.google.com/storage/docs/access-control/signed-urls)).
+1. **Login**  
+   Open SkyPipe and sign in with your configured credentials.
 
-## Dataproc (distributed Spark)
+2. **Upload Dataset (Input Stage)**  
+   Go to **Input** page and upload CSV/JSON/Excel/Parquet.  
+   File is validated and staged to MinIO object storage.
 
-1. Set `create_dataproc_cluster = true` in Terraform (mind cost).
-2. Submit the same `spark_pipeline` logic packaged as a job, or SSH to cluster and run with:
+3. **Monitor Processing (Processing Stage)**  
+   Navigate to **Processing** page to watch real-time progress.  
+   Spark detects schema and runs adaptive analytics in parallel.
 
-   ```bash
-   export SPARK_MASTER=yarn
-   ```
+4. **View Analytics (Result Store Stage)**  
+   Open **Results** page for charts, aggregate values, and warehouse lineage.  
+   Data is persisted in DuckDB layered schemas.
 
-3. Ensure **GCS connector** is on the classpath (preinstalled on Dataproc images).
+5. **Verify in DuckDB CLI (optional)**
 
-## Environment variables
+```bash
+duckdb "data/warehouse.duckdb"
+```
 
-See `.env.example`. Highlights:
+```sql
+SHOW SCHEMAS;
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema IN ('main','raw_data','processed','analytics')
+ORDER BY table_schema, table_name;
+```
 
-| Variable | Purpose |
-|----------|---------|
-| `SPARK_MASTER` | `local[*]`, `yarn`, etc. |
-| `SKYPIPE_CHECKPOINT_DIR` | HDFS or `gs://` checkpoint for fault-tolerance demos |
-| `SKYPIPE_CHECKPOINT_DF` | `true` to checkpoint the DataFrame mid-DAG |
-| `FIREBASE_PROJECT_ID` + `JWT_AUDIENCE` | Enforce Bearer tokens on API |
-| `SKYPIPE_UI_PASSWORD` | Simple Streamlit gate |
+## Screenshots
 
-## Large files & streaming
+> Add real images in `docs/images/` and update paths below.
 
-- **CSV/JSON/Parquet:** Spark reads partitions in parallel; increase partitions for wide clusters.
-- **Excel:** Moderate files use Pandas on the driver; for very large spreadsheets convert to **Parquet** or add **spark-excel** on Dataproc.
+### Dashboard
+`docs/images/dashboard.png`  
+![Dashboard](docs/images/dashboard.png)
 
-## Milestones (exam paper)
+### Input Page
+`docs/images/input_page.png`  
+![Input Page](docs/images/input_page.png)
 
-1. **SRS** → `docs/SRS.md`  
-2. **System Design** → `docs/SYSTEM_DESIGN.md` + adaptive engine section  
-3. **Secure Implementation** → This repo  
-4. **Presentation** → `presentation/PRESENTATION.md`  
-5. **Report** → `report/REPORT.md`
+### Processing Page (Live Progress)
+`docs/images/processing_page.png`  
+![Processing Page](docs/images/processing_page.png)
 
-## Defense FAQ
+### Results Page (Charts + Aggregates)
+`docs/images/results_page.png`  
+![Results Page](docs/images/results_page.png)
 
-See `docs/CONCEPTS.md` for concise answers on *any dataset*, schema detection, Spark on unknown structures, and scalability.
+## Scalability, Fault Tolerance & Security
 
-## License
+### Scalability
 
-Educational project — retain course attribution when submitting.
+- Spark executes analytics in **parallel tasks** over partitioned data.
+- Storage and compute are decoupled (object store + processing engine).
+- Architecture can evolve from local mode to larger clustered execution patterns.
+
+### Fault Tolerance
+
+- Each upload receives a unique **job_id** and isolated lifecycle.
+- Jobs transition through clear states: `queued -> running -> completed/failed`.
+- Errors are captured safely without crashing the whole service.
+- Processed outputs are persisted for replay/inspection in DuckDB.
+
+### Security
+
+- JWT-protected backend endpoints.
+- Upload validation (type, extension, size checks).
+- Credentials sourced from environment variables, not hardcoded.
+- Nginx gateway controls API route exposure.
+
+## Project Structure
+
+```text
+skypipe/
+├── frontend/                # React UI
+├── src/                     # FastAPI + Spark + warehouse logic
+│   ├── fastapi_app.py
+│   ├── spark_pipeline.py
+│   ├── schema_detector.py
+│   ├── storage_pipeline.py
+│   ├── warehouse_layers.py
+│   └── warehouse_duckdb.py
+├── docker/                  # Dockerfiles + nginx config
+├── docs/                    # SRS, system design, concepts
+├── report/                  # Technical report (LaTeX/outputs)
+├── presentation/            # Presentation materials
+├── data/                    # Local persisted data (DuckDB, uploads)
+├── docker-compose.yml
+└── README.md
+```
+
+## Learning Outcomes & Challenges Overcome
+
+This project strengthened practical understanding of distributed systems architecture, especially stage separation between storage, processing, and warehousing. It also improved skills in Spark orchestration, secure API development, and full-stack integration for data workflows.
+
+Key challenges included gateway timeouts during heavy processing, ensuring warehouse layers are always created per job, and keeping user-facing explanations clear. These were solved through backend job orchestration improvements, startup schema initialization, and UI/architecture refinements.
+
+## Future Enhancements
+
+- Cluster-scale Spark deployment profile (e.g., managed cloud Spark)
+- Role-based access control (RBAC) and audit logs
+- Data quality rule engine for advanced validation
+- Scheduled pipelines and recurring job triggers
+- Exportable BI-ready marts and semantic metric layer
+
+## Links
+
+- **GitHub Repository:** [RUGOGAMUNOELA/cloud_computing_project](https://github.com/RUGOGAMUNOELA/cloud_computing_project.git)
+- **Technical Report (PDF):** `report/` (add final PDF filename)
+- **Presentation Slides:** `presentation/` (add final PPT/PDF filename)
+- **Demo Video (if available):** add link here
+
+## License & Acknowledgments
+
+This project was developed for academic purposes under **DSC3219 Cloud and Distributed Computing** at **Uganda Christian University** (Easter 2026).  
+Special thanks to course instructors and peers for feedback during implementation and defense preparation.
